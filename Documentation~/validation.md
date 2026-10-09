@@ -1,15 +1,15 @@
-# 0.1.0 preview validation
+# 0.2.0 validation
 
-Performed on 2026-10-09 on Windows with installed Unity 6000.3.9f1.
+Verified on Windows / Unity 6000.3.9f1 on 2026-10-09.
 
-- All shipped Editor sources compiled using the installed Unity Roslyn compiler, real Unity Editor/Engine assemblies and .NET Standard 2.1 references.
-- All shipped test sources compiled against Unity APIs and Unity's NUnit framework.
-- **12 managed NUnit test methods passed** in a standalone Mono harness using the actual package code: copy isolation, unsupported structure, duplicate locales/keys, array mismatch, non-text exclusion, change fingerprints, CSV quotes/newlines/raw formula prefixes, unknown source locale, reserved column names, null/empty differences and deterministic ordering.
-- The Unity-native `JsonUtility` round-trip test was **not executed**.
-- Actual Unity batchmode EditMode tests and a private real-I2 fixture were attempted, but Package Manager stopped before package resolution/compilation with `The "path" argument must be of type string. Received undefined`. The same failure occurred when Unity generated a new project without this package.
+- All shipped Editor and test sources compiled against actual Unity assemblies.
+- 21 managed NUnit tests passed: snapshots, normal/touch merging, three-way conflicts, stale source/locale/baseline checks and all-cell preflight before mutation.
+- All 22 NUnit tests, including native JsonUtility serialization, passed inside Unity.
+- A private fixture with an actual separately licensed I2 LanguageSource component passed native prefab creation, scan, baseline/pending-request serialization, applying normal/touch cells, saved-prefab reread, preservation of unrelated text/flags/non-text data, and I2's actual translation lookup.
+- The service API's authenticated HTTP/transactional D1 integration tests verify multilingual/variant import, approved-only pull, idempotent replay, replay mismatch, source invalidation, conflict rollback, project/locale/branch/scope boundaries, protected tokens and concurrent source changes.
 
-Consequently, successful interactive UPM installation, Unity-hosted tests, actual I2 prefab scanning and Player build exclusion have **not yet been runtime-validated**. This preview is not a production-ready sync/apply release. Assembly configuration excludes all tool code from Player compilation; a real Player build remains a separate validation requirement.
+Unity Package Manager startup fails on this machine even for a fresh project unrelated to this package (`The "path" argument must be of type string. Received undefined`). Native tests were therefore hosted with the documented `-noUpm` option, source installed into an isolated fixture's Editor directory, and the fixture's licensed I2 dependencies loaded privately. This validates Unity execution, not an interactive Git-URL UPM installation. A real Player build exclusion test has not been run; assembly configuration restricts all shipped code to Editor.
 
-To run the native suite on a working Unity installation, install Unity Test Framework, add this package to the project manifest's `testables`, and run EditMode tests filtered to `BreadLingo.I2.Editor.Tests`. I2 is not required for the synthetic suite.
+The public repository's CI verifies package boundaries and the npm tarball. It does not execute licensed I2 or Unity. No vendor source, compiled Unity assemblies, game text or private test fixtures are published.
 
-No I2 vendor code, real game text, private project fixtures or compiled Unity assemblies are included in the public package.
+This release is a beta for bidirectional text sync. Runtime CSV/ZIP/CDN publishing, browser account pairing, modern LanguageSourceAsset layouts, automatic delete/rename and overwriting existing server translations are outside this release.

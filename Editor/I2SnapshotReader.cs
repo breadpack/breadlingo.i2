@@ -19,6 +19,10 @@ namespace BreadLingo.I2.Editor
                 var type = assembly.GetType("I2.Loc.LanguageSource", false);
                 if (type != null && typeof(Component).IsAssignableFrom(type)) return type;
             }
+            // Unity can know a runtime assembly without eagerly loading it into
+            // the Editor AppDomain. TypeCache covers that lazy-load case.
+            foreach (var type in TypeCache.GetTypesDerivedFrom<Component>())
+                if (type.FullName == "I2.Loc.LanguageSource") return type;
             return null;
         }
 
@@ -99,7 +103,7 @@ namespace BreadLingo.I2.Editor
             return snapshot;
         }
 
-        private static string Hash(I2Snapshot snapshot)
+        internal static string Hash(I2Snapshot snapshot)
         {
             // Length-prefixed values preserve null/empty differences and prevent
             // delimiter collisions. The fingerprint does not depend on Unity JSON.

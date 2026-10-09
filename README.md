@@ -1,63 +1,46 @@
 # BreadLingo I2 Localization
 
-Public, MIT-licensed Unity Editor tooling for projects using [I2 Localization](https://www.inter-illusion.com/tools/i2-localization).
-
-**0.1.0 is a read-only preview.** It detects legacy I2 `LanguageSource` prefab components, inspects language/text data, and exports a local JSON text snapshot or translation-exchange CSV. It does **not** connect to the BreadLingo service, upload data, pull approved translations, modify I2 assets, or generate game runtime CSV/ZIP files. These integrations are planned for later releases.
+Public MIT Unity Editor tooling for I2 Localization. Install I2 separately under its own license. No vendor code, private service code, game content or Unity Localization Package dependency is included.
 
 ## Install
 
-Unity Package Manager → **Add package from Git URL**:
+Unity Package Manager → Add package from Git URL:
 
 ```text
-https://github.com/breadpack/breadlingo.i2.git#v0.1.0
+https://github.com/breadpack/breadlingo.i2.git#v0.2.0
 ```
 
-No GitHub credentials or BreadLingo account are required to install or use local tools. Install I2 separately under its own license. This package has no Unity Localization Package dependency and does not include vendor code or game content.
+The release also provides `com.breadpack.breadlingo.i2-0.2.0.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
 
-The release also provides `com.breadpack.breadlingo.i2-0.1.0.tgz` for **Add package from tarball**. Commit the project's package manifest and lock file to share the pinned version with your team.
+## Bidirectional workflow
 
-## Use
+1. Create a dedicated BreadLingo project with the exact I2 source and target **locale codes**, such as `ko`, `en`, `ja`, `zh-TW` (not translated language names). This version supports the `main` branch.
+2. Create a project-scoped **Unity connector token** in BreadLingo, with `unity:push`, `unity:pull`, `import:create`, `export:create`. Restrict its locales/branch and expiration as appropriate.
+3. Open **Window → BreadLingo → I2 Localization**. Set the HTTPS service origin, workspace/project IDs or slugs and token. The token stays in memory; it is never saved in preferences/assets/logs. CI code can supply `BREADLINGO_CONNECTOR_TOKEN`. Browser account pairing is not included in this version.
+4. Select a saved prefab with a legacy `I2.Loc.LanguageSource` component, scan, and select the source locale.
+5. Choose **Send I2 → BreadLingo**. Normal and touch variants are distinct entries. Source text and description are uploaded; existing translations are registered as `needs_review` only when the remote target is absent. Existing web translations are preserved. Source edits invalidate existing target approvals. Unchanged sources need no repeat upload.
+6. Translate and approve the results in BreadLingo's editor/review workflow.
+7. Choose **Preview approved BreadLingo → I2**. Only approved translations matching the current source revision are returned. Review per-cell differences; conflicts remain blocked. Resolve a blocked local edit in I2 or revise the translation in BreadLingo, then scan/send/preview again.
+8. Choose **Revalidate and apply selected translations**. The service approval digest and local fingerprint are checked again. Only selected normal/touch array cells change; flags, unrelated text, non-text terms and asset references are retained. A prefab backup is created under `Library/BreadLingoI2/Backups`. Saved data is reread and verified; a failed save verification restores the backup.
 
-1. Open **Window → BreadLingo → I2 Localization**.
-2. Select a saved prefab containing `I2.Loc.LanguageSource` in the Project window, then choose **Use selected prefab** or assign it directly.
-3. Choose **Scan source** and select the source language by code.
-4. Export JSON or CSV to an explicit local destination.
+The initial send and successful applies establish a three-way merge baseline. A changed remote value is applied when the local value still matches that baseline. If both local and remote changed, application is blocked. A remote value unchanged since the baseline does not overwrite a local edit. Missing or unapproved translations are retained.
 
-The tool never calls I2 import, localization-manager or lifecycle methods. It reads saved objects and copies text data through a small reflection boundary. Unsupported structures, duplicate keys/codes and mismatched arrays stop the scan. It can be installed without I2; the window then shows installation guidance.
+Sync uses bounded chunks (25 term variants, at most 256 KiB). Source revision checks and each chunk's receipt/mutations are transactional. The local pending request is journaled before sending; the same request is replayed after a lost acknowledgement. Baselines and journals live under `Library/BreadLingoI2/State`, contain private translation data, and must not be committed. Preserve this directory if you need to keep merge history across Library cleanup; a lost baseline requires reconnecting by an explicit send and carefully reviewing local changes. Whole-source sync is a sequence of atomic chunks, not one all-source transaction.
 
-JSON includes normal/touch text arrays, descriptions and flags, with non-text term counts. It excludes non-text localization and asset references and is **not a complete I2 backup or apply artifact**. CSV contains normal text only; touch data stays in JSON. CSV header:
+## Supported data and boundaries
 
-```text
-key,source_locale,source_text,description,i2_source_id,<locale codes...>
-```
+- Saved prefab components with public `mLanguages`/`mTerms` fields and the known legacy I2 layout. Modern `LanguageSourceAsset` variants need an adapter and are not supported yet.
+- Normal/touch **Text** terms, descriptions and exact locale codes. Non-text translations are excluded from service exchange and preserved locally.
+- Empty/duplicate term keys, duplicate locale codes and mismatched arrays stop scanning. Repair ambiguous source data in the I2 tool first; this connector does not guess which duplicate wins.
+- Term identity includes the asset GUID, component local file ID, exact key and variant. Different sources cannot collide. A source-locale change requires a separate matching project. Rename/deletion is explicit: absent terms are not automatically deleted from the service or prefab.
+- Existing server targets are never overwritten by another send. This version imports existing translations into absent targets, rather than synchronizing locally edited translations back over web edits.
+- Selected approvals are rechecked shortly before apply; revalidation taking over 30 seconds is rejected so you can apply a smaller selection. There is no server-side lock extending through the local save.
+- Runtime CSV/ZIP/CDN publishing is **not** included. Games that load a separate CSV after the prefab must publish a complete runtime snapshot through their own build pipeline. Otherwise that loader can replace the newly applied prefab values. Native I2 `Import_CSV(Replace)` is never used by this connector.
 
-You can use BreadLingo's general CSV import and explicitly map columns. There is no automatic I2 profile or supported return/apply path in this version. Neither export is a native I2 runtime CSV. Never replace your runtime language file with it.
+Local JSON/CSV export remains available. JSON is a text snapshot, not a full asset backup. CSV is a translation exchange file, not an I2 runtime file; it contains normal text only and preserves raw formula-like prefixes. Treat exported data as confidential and review untrusted CSV before opening it in spreadsheet software.
 
-Exports contain your actual translation data; keep them private unless you intend to share them. CSV preserves raw text, including formula-like prefixes. Review untrusted text before opening CSV in spreadsheet software; it does not add spreadsheet-protection apostrophes that would change game strings.
+See [validation evidence and limitations](Documentation~/validation.md). Report package issues without attaching credentials, private game text or licensed I2 files.
 
-## Compatibility
+## 한국어
 
-Initial target: Windows, Unity **6000.3.9f1**, legacy component-based I2 sources exposing public `mTerms`, `mLanguages`, `Languages`, `Languages_Touch` and `Flags` fields. Newer `LanguageSourceAsset`/`LanguageSourceData` structures and scene-local sources are not supported yet. See the [validation notes](Documentation~/validation.md) for evidence and the current Unity runtime validation limitation; compatibility with an arbitrary I2 version is not implied by successful type detection.
-
-All tool code is Editor-only. No runtime component, account token, network sync or game data is bundled.
-
-## Development and roadmap
-
-Enable package tests by adding `com.breadpack.breadlingo.i2` to the project manifest's `testables` list, with Unity Test Framework installed. Tests use synthetic data only.
-
-**Bidirectional service synchronization is the required scope of the next feature release.** The local-export-only 0.1.0 preview does not satisfy that integration requirement.
-
-| Direction | Required behavior (not implemented in 0.1.0) |
-| --- | --- |
-| I2 → BreadLingo | Send source changes, existing multilingual translations and context, preserving key identity and normal/touch variants. Confirm the results in the service editor. Existing translations are not automatically approved. |
-| BreadLingo → I2 | Fetch approved translations for the current source revision, map language codes and entry identities, preview differences/conflicts, then apply and verify the saved I2 values. Preserve entries absent from the response. |
-
-Acceptance requires a real round trip: change an I2 source → send to BreadLingo → translate/review → fetch approved results → resolve local conflicts → save and reread I2 → verify game display with matching runtime data. Repeating a push/pull must not create duplicate entries or unrelated changes. A file download alone does not count as a successful import/apply.
-
-Project-scoped account connection, incremental jobs, three-way conflict resolution, fixed translation releases and project-specific runtime export codecs support this required workflow. Online features will require authorized BreadLingo project access. Local installation remains publicly accessible. Account connection, sync and apply remain unavailable in the current preview.
-
-Report reproducible package issues on this repository. Do not attach account tokens, private game text, licensed I2 source or full production snapshots to public issues.
-
-## 한국어 안내
-
-현재 버전은 **로컬 조회·내보내기만 가능한 preview**입니다. 설치는 누구나 무료로 할 수 있으며 계정 로그인이 필요 없습니다. I2는 별도로 설치해야 합니다. BreadLingo 온라인 동기화·승인 번역 가져오기·게임 반영 기능은 아직 제공하지 않습니다. CSV는 번역 교환용이며 게임의 I2 언어 파일로 사용할 수 없습니다.
+`Send I2 → BreadLingo`로 원문·기존 다국어 번역·context를 전송하고, 서비스에서 검토·승인한 뒤 `Preview approved BreadLingo → I2`에서 변경을 확인하여 선택 적용합니다. 로컬 수정 충돌이나 원문 버전 불일치는 차단합니다. 토큰은 메모리에만 보관하며 패키지 설치는 누구나 공개 Git URL로 할 수 있습니다. 별도 런타임 CSV/CDN 배포는 게임 빌드 파이프라인에서 처리해야 합니다.

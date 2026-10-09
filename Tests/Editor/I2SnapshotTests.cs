@@ -25,6 +25,75 @@ namespace BreadLingo.I2.Editor.Tests
             };
             public List<TermFixture> mTerms = new List<TermFixture> { new TermFixture() };
         }
+        private static I2SyncBaseline Baseline(I2Snapshot snapshot)
+        {
+            var items=I2SyncModel.BuildItems(snapshot,"ko",null);
+            foreach(var item in items)item.expectedVersion=1;
+            return new I2SyncBaseline{scope="test",sourceId=snapshot.sourceId,sourceLocale="ko",items=items};
+        }
+        private static I2ApprovedItem Approved(string text="Approved {0}",string variant="normal")
+        {
+            return new I2ApprovedItem{key="UI/Message",variant=variant,sourceText=variant=="normal"?"안녕 {0}":"터치",locale="en",text=text,sourceVersion=1,translationVersion=2};
+        }
+        [Test] public void SafeThreeWayMergeChangesOnlySelectedNormalCell()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");
+            var changes=I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{Approved()},"ko");
+            Assert.That(changes.Count,Is.EqualTo(1));Assert.That(changes[0].issue,Is.Null);
+            I2SafeApply.ApplyValues(source,changes);
+            Assert.That(source.mTerms[0].Languages[1],Is.EqualTo("Approved {0}"));
+            Assert.That(source.mTerms[0].Languages[0],Is.EqualTo("안녕 {0}"));
+            Assert.That(source.mTerms[0].Languages_Touch[1],Is.EqualTo("Touch"));
+            Assert.That(source.mTerms[0].Flags[1],Is.EqualTo(1));
+        }
+        [Test] public void LocalAndRemoteEditsConflictWithoutMutation()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");var baseline=Baseline(snapshot);
+            source.mTerms[0].Languages[1]="Local {0}";
+            var changes=I2SyncModel.Preview(I2SnapshotReader.Read(source,"fixture:1"),baseline,new[]{Approved()},"ko");
+            Assert.That(changes[0].issue,Is.Not.Null);Assert.That(changes[0].selected,Is.False);
+            I2SafeApply.ApplyValues(source,changes);Assert.That(source.mTerms[0].Languages[1],Is.EqualTo("Local {0}"));
+        }
+        [Test] public void RemoteUnchangedFromBaseKeepsLocalEdit()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");var baseline=Baseline(snapshot);source.mTerms[0].Languages[1]="Local {0}";
+            Assert.That(I2SyncModel.Preview(I2SnapshotReader.Read(source,"fixture:1"),baseline,new[]{Approved("Hello {0}")},"ko"),Is.Empty);
+        }
+        [Test] public void TouchApplyPreservesNormalTextAndFlags()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");
+            var changes=I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{Approved("Approved touch","touch")},"ko");I2SafeApply.ApplyValues(source,changes);
+            Assert.That(source.mTerms[0].Languages_Touch[1],Is.EqualTo("Approved touch"));Assert.That(source.mTerms[0].Languages[1],Is.EqualTo("Hello {0}"));Assert.That(source.mTerms[0].Flags[1],Is.EqualTo(1));
+        }
+        [Test] public void PreflightStopsEntireApplyWhenOneCellChanged()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");
+            var changes=I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{Approved(),Approved("Touch remote","touch")},"ko");source.mTerms[0].Languages_Touch[1]="Late edit";
+            Assert.Throws<InvalidOperationException>(()=>I2SafeApply.ApplyValues(source,changes));Assert.That(source.mTerms[0].Languages[1],Is.EqualTo("Hello {0}"));
+        }
+        [Test] public void MissingBaselineAndDuplicateRemoteCellsAreBlocked()
+        {
+            var snapshot=I2SnapshotReader.Read(new Source(),"fixture:1");
+            Assert.Throws<InvalidOperationException>(()=>I2SyncModel.Preview(snapshot,null,new[]{Approved()},"ko"));
+            Assert.Throws<InvalidOperationException>(()=>I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{Approved(),Approved()},"ko"));
+        }
+        [Test] public void StaleSourceRevisionAndUnknownLocaleAreBlocked()
+        {
+            var snapshot=I2SnapshotReader.Read(new Source(),"fixture:1");var remote=Approved();remote.sourceVersion=2;
+            Assert.That(I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{remote},"ko")[0].issue,Is.Not.Null);
+            remote=Approved();remote.locale="fr";Assert.That(I2SyncModel.Preview(snapshot,Baseline(snapshot),new[]{remote},"ko")[0].issue,Is.Not.Null);
+        }
+        [Test] public void SourceTextEditBlocksApprovedApply()
+        {
+            var source=new Source();var snapshot=I2SnapshotReader.Read(source,"fixture:1");var baseline=Baseline(snapshot);source.mTerms[0].Languages[0]="Changed";
+            Assert.That(I2SyncModel.Preview(I2SnapshotReader.Read(source,"fixture:1"),baseline,new[]{Approved()},"ko")[0].issue,Is.Not.Null);
+        }
+        [Test] public void SendFingerprintDetectsLaterTranslationForPreviouslyEmptyTarget()
+        {
+            var source=new Source();source.mTerms[0].Languages[1]="";var snapshot=I2SnapshotReader.Read(source,"fixture:1");var original=I2SyncModel.BuildItems(snapshot,"ko",null)[0];
+            var hash=I2SyncModel.SentHash(original);source.mTerms[0].Languages[1]="Later {0}";
+            Assert.That(I2SyncModel.SentHash(I2SyncModel.BuildItems(I2SnapshotReader.Read(source,"fixture:1"),"ko",null)[0]),Is.Not.EqualTo(hash));
+        }
         [Test] public void CopiesTextTouchFlagsWithoutChangingSource()
         {
             var source = new Source();
