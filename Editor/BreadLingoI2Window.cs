@@ -109,8 +109,13 @@ namespace BreadLingo.I2.Editor
                 if(baseline.pending!=null)await send(baseline.pending);
                 baseline.items=previous.Values.ToList();var all=I2SyncModel.BuildItems(snapshot,Locale,baseline);
                 var delta=all.Where(i=>!previous.TryGetValue(I2SyncModel.Identity(i.key,i.variant),out var old)||I2SyncModel.SentHash(i)!=old.lastSentHash).ToList();
-                var chunks=Chunks(delta);for(int i=0;i<chunks.Count;i++){Fresh();message="Sending "+(i+1)+" / "+chunks.Count+" chunks…";Repaint();await send(chunks[i]);}
-                message="Send complete: "+delta.Count+" term variants. Existing web translations preserved. Review in BreadLingo before pulling.";
+                // Requests use the immutable captured snapshot. Re-reading a large
+                // game prefab for every small chunk would make this quadratic.
+                var chunks=Chunks(delta);for(int i=0;i<chunks.Count;i++){message="Sending "+(i+1)+" / "+chunks.Count+" chunks…";Repaint();await send(chunks[i]);}
+                var latest=I2SnapshotReader.ReadAsset(sourceAsset);
+                message=latest.sourceHash==snapshot.sourceHash
+                    ? "Send complete: "+delta.Count+" term variants. Existing web translations preserved. Review in BreadLingo before pulling."
+                    : "Captured snapshot sent. The local source changed during upload; scan and send again before pulling.";
             }
         }
         private async Task Preview()
@@ -142,9 +147,10 @@ namespace BreadLingo.I2.Editor
                 }
                 if((DateTime.UtcNow-revalidationStarted).TotalSeconds>30)throw new InvalidOperationException("Revalidation took too long. Select fewer cells and preview again.");
                 Fresh();var backup=I2SafeApply.ApplyAsset(sourceAsset,previewHash,selected);var updated=new List<I2SyncItem>();
+                var baselineByIdentity=previewBaseline.items.ToDictionary(i=>I2SyncModel.Identity(i.key,i.variant));
                 foreach(var group in selected.GroupBy(c=>I2SyncModel.Identity(c.key,c.variant)))
                 {
-                    var item=previewBaseline.items.Single(i=>I2SyncModel.Identity(i.key,i.variant)==group.Key);foreach(var change in group)item.translations.Single(t=>t.locale==change.locale).text=change.remote;updated.Add(item);
+                    var item=baselineByIdentity[group.Key];foreach(var change in group)item.translations.Single(t=>t.locale==change.locale).text=change.remote;updated.Add(item);
                 }
                 new I2BaselineStore(client.Scope,snapshot.sourceId,Locale).Append(previewBaseline,updated);snapshot=I2SnapshotReader.ReadAsset(sourceAsset);ClearPreview();message="Applied "+selected.Count+" text cells; saved prefab verified. Backup: "+backup+". Separate runtime CSV loaders need their own runtime publication.";
             }
