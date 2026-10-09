@@ -1,0 +1,18 @@
+{
+  "name": "com.breadpack.breadlingo.i2",
+  "displayName": "BreadLingo I2 Localization",
+  "version": "0.1.0",
+  "unity": "6000.3",
+  "description": "Read-only Unity Editor preview: inspect I2 Localization sources and export local snapshots and translation CSV.",
+  "author": { "name": "BreadPack", "url": "https://github.com/breadpack" },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/breadpack/breadlingo.i2#readme",
+  "changelogUrl": "https://github.com/breadpack/breadlingo.i2/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/breadpack/breadlingo.i2/blob/main/LICENSE.md",
+  "keywords": ["localization", "i2", "breadlingo", "editor"],
+  "files": ["Editor/", "Editor.meta", "Tests/", "Tests.meta", "Documentation~/", "README.md", "CHANGELOG.md", "LICENSE.md"],
+  "dependencies": {
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0"
+  }
+}

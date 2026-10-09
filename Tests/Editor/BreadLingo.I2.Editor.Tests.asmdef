@@ -1,0 +1,8 @@
+{
+  "name": "BreadLingo.I2.Editor.Tests",
+  "rootNamespace": "BreadLingo.I2.Editor.Tests",
+  "references": ["BreadLingo.I2.Editor"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

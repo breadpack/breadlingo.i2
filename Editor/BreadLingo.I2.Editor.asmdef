@@ -1,0 +1,9 @@
+{
+  "name": "BreadLingo.I2.Editor",
+  "rootNamespace": "BreadLingo.I2.Editor",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "allowUnsafeCode": false,
+  "noEngineReferences": false
+}

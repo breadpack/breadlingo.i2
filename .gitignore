@@ -1,0 +1,10 @@
+Library/
+Temp/
+Logs/
+UserSettings/
+obj/
+artifacts/
+node_modules/
+*.tgz
+.env
+.env.*
