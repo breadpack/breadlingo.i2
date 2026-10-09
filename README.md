@@ -45,7 +45,16 @@ All tool code is Editor-only. No runtime component, account token, network sync 
 
 Enable package tests by adding `com.breadpack.breadlingo.i2` to the project manifest's `testables` list, with Unity Test Framework installed. Tests use synthetic data only.
 
-Planned: project-scoped account connection, incremental source jobs, reviewed translation pull, three-way conflict resolution, fixed translation releases and project-specific runtime export codecs. Online features will require authorized BreadLingo project access. Local installation remains publicly accessible.
+**Bidirectional service synchronization is the required scope of the next feature release.** The local-export-only 0.1.0 preview does not satisfy that integration requirement.
+
+| Direction | Required behavior (not implemented in 0.1.0) |
+| --- | --- |
+| I2 → BreadLingo | Send source changes, existing multilingual translations and context, preserving key identity and normal/touch variants. Confirm the results in the service editor. Existing translations are not automatically approved. |
+| BreadLingo → I2 | Fetch approved translations for the current source revision, map language codes and entry identities, preview differences/conflicts, then apply and verify the saved I2 values. Preserve entries absent from the response. |
+
+Acceptance requires a real round trip: change an I2 source → send to BreadLingo → translate/review → fetch approved results → resolve local conflicts → save and reread I2 → verify game display with matching runtime data. Repeating a push/pull must not create duplicate entries or unrelated changes. A file download alone does not count as a successful import/apply.
+
+Project-scoped account connection, incremental jobs, three-way conflict resolution, fixed translation releases and project-specific runtime export codecs support this required workflow. Online features will require authorized BreadLingo project access. Local installation remains publicly accessible. Account connection, sync and apply remain unavailable in the current preview.
 
 Report reproducible package issues on this repository. Do not attach account tokens, private game text, licensed I2 source or full production snapshots to public issues.
 
