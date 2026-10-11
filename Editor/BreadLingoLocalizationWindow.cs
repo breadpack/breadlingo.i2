@@ -60,7 +60,7 @@ namespace BreadLingo.I2.Editor
                 if(source==null)EditorGUILayout.HelpBox("Select a saved I2 LanguageSource prefab. The package does not include the I2 vendor tool.",MessageType.Info);
                 if(connection==null)
                 {
-                    using(new EditorGUI.DisabledScope(busy||source==null||sourceIndex<0))if(GUILayout.Button("Connect account in browser",GUILayout.Height(40)))Start(async()=>{connection=await UnityAccountConnection.Begin(source,source.languages[sourceIndex].code,origin);Application.OpenURL(connection.verificationUri);message="Approve the matching game and code in your browser.";nextPoll=0;});
+                    using(new EditorGUI.DisabledScope(busy||source==null||sourceIndex<0))if(GUILayout.Button("Connect account in browser",GUILayout.Height(40)))RunOperation(async()=>{connection=await UnityAccountConnection.Begin(source,source.languages[sourceIndex].code,origin);Application.OpenURL(connection.verificationUri);message="Approve the matching game and code in your browser.";nextPoll=0;});
                 }
                 else if(!connection.Connected)
                 {
@@ -69,13 +69,13 @@ namespace BreadLingo.I2.Editor
                     using(new EditorGUI.DisabledScope(busy))
                     {
                         if(!string.IsNullOrEmpty(connection.verificationUri)&&GUILayout.Button("Open account confirmation"))Application.OpenURL(connection.verificationUri);
-                        if(GUILayout.Button("Cancel / reconnect"))Start(Disconnect);
+                        if(GUILayout.Button("Cancel / reconnect"))RunOperation(Disconnect);
                     }
                 }
                 else
                 {
                     EditorGUILayout.LabelField("Account",connection.accountName);EditorGUILayout.LabelField("Connected project",connection.projectName);
-                    using(new EditorGUI.DisabledScope(busy))if(GUILayout.Button("Disconnect account"))Start(Disconnect);
+                    using(new EditorGUI.DisabledScope(busy))if(GUILayout.Button("Disconnect account"))RunOperation(Disconnect);
                 }
             }
             GUILayout.Space(16);
@@ -97,7 +97,7 @@ namespace BreadLingo.I2.Editor
                         foreach(var code in connection.existingLocales.Where(c=>c!=connection.sourceLocale&&!Codes.Contains(c)))
                         {bool value=EditorGUILayout.ToggleLeft(code+" · Existing",selected.Contains(code));if(value)selected.Add(code);else selected.Remove(code);}
                         GUILayout.Space(12);
-                        using(new EditorGUI.DisabledScope(selected.Count==0))if(GUILayout.Button("Save selected languages",GUILayout.Height(40)))Start(async()=>{await UnityAccountConnection.ConfigureLanguages(connection,selected.OrderBy(c=>c,StringComparer.Ordinal).ToArray());message="Languages saved to BreadLingo. No game text was uploaded and no AI job was started.";});
+                        using(new EditorGUI.DisabledScope(selected.Count==0))if(GUILayout.Button("Save selected languages",GUILayout.Height(40)))RunOperation(async()=>{await UnityAccountConnection.ConfigureLanguages(connection,selected.OrderBy(c=>c,StringComparer.Ordinal).ToArray());message="Languages saved to BreadLingo. No game text was uploaded and no AI job was started.";});
                     }
                 }
                 EditorGUILayout.HelpBox("The source prefab is unchanged. New local I2 language columns are created only by a future explicit apply operation. AI translation is started separately in BreadLingo.",MessageType.Info);
@@ -121,8 +121,8 @@ namespace BreadLingo.I2.Editor
         {
             if(busy||connection==null||connection.Connected||string.IsNullOrEmpty(connection.id)||EditorApplication.timeSinceStartup<nextPoll)return;
             nextPoll=EditorApplication.timeSinceStartup+6;
-            Start(async()=>{try{if(await UnityAccountConnection.Poll(connection))message="Account connected. Choose your target languages below.";}catch(UnityConnectionException error){if(error.Status!=429){message=error.Message;nextPoll=EditorApplication.timeSinceStartup+30;}}});
+            RunOperation(async()=>{try{if(await UnityAccountConnection.Poll(connection))message="Account connected. Choose your target languages below.";}catch(UnityConnectionException error){if(error.Status!=429){message=error.Message;nextPoll=EditorApplication.timeSinceStartup+30;}}});
         }
-        private async void Start(Func<Task> action){if(busy)return;busy=true;try{await action();}catch(Exception error){message=error.Message;}finally{busy=false;Repaint();}}
+        private async void RunOperation(Func<Task> action){if(busy)return;busy=true;try{await action();}catch(Exception error){message=error.Message;}finally{busy=false;Repaint();}}
     }
 }

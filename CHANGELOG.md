@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2026-10-11
+
+- Rename Editor async operation helpers to avoid Unity interpreting `Start(Func<Task>)` as an invalid lifecycle message during real UPM import.
+
 ## 0.3.0 — 2026-10-11 (beta)
 
 - Browser account pairing, automatic workspace/project setup and source-identity reconnection.

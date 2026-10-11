@@ -46,8 +46,8 @@ namespace BreadLingo.I2.Editor
                     EditorGUILayout.LabelField("Terms / text / excluded assets",snapshot.termCount+" / "+snapshot.entries.Count+" / "+snapshot.nonTextCount);
                     EditorGUI.BeginChangeCheck();sourceLanguage=EditorGUILayout.Popup("Source locale",sourceLanguage,snapshot.languages.ConvertAll(l=>l.name+" ("+l.code+")").ToArray());if(EditorGUI.EndChangeCheck())ClearPreview();
                     EditorGUILayout.HelpBox("Send registers existing translations as needs_review and preserves web edits. Pull applies current-source approved translations. Missing terms are retained; rename/deletion requires explicit handling. Use a dedicated project for this source.",MessageType.Info);
-                    if(GUILayout.Button("Send I2 → BreadLingo"))Start(Send);
-                    if(GUILayout.Button("Preview approved BreadLingo → I2"))Start(Preview);
+                    if(GUILayout.Button("Send I2 → BreadLingo"))RunOperation(Send);
+                    if(GUILayout.Button("Preview approved BreadLingo → I2"))RunOperation(Preview);
                     if(changes!=null)
                     {
                         int safe=changes.Count(c=>c.issue==null);EditorGUILayout.LabelField("Preview",safe+" safe changes / "+(changes.Count-safe)+" blocked conflicts");
@@ -61,7 +61,7 @@ namespace BreadLingo.I2.Editor
                         EditorGUILayout.EndScrollView();
                         EditorGUILayout.LabelField("Pages",(previewPage+1)+" / "+Math.Max(1,(changes.Count+49)/50)+" — "+changes.Count(c=>c.selected)+" selected");
                         if(GUILayout.Button("Clear selection"))foreach(var c in changes)c.selected=false;
-                        using(new EditorGUI.DisabledScope(!changes.Any(c=>c.selected)))if(GUILayout.Button("Revalidate and apply selected translations"))Start(Apply);
+                        using(new EditorGUI.DisabledScope(!changes.Any(c=>c.selected)))if(GUILayout.Button("Revalidate and apply selected translations"))RunOperation(Apply);
                     }
                     if(GUILayout.Button("Export local text snapshot (JSON)"))Export(false);if(GUILayout.Button("Export local exchange CSV"))Export(true);
                 }
@@ -166,6 +166,6 @@ namespace BreadLingo.I2.Editor
         }
         private void ClearPreview(){changes=null;previewRequests=null;previewDigests=null;previewBaseline=null;previewHash=null;previewScope=null;}
         private void Run(Action action){try{action();}catch(Exception e){message="Stopped: "+e.Message;}}
-        private async void Start(Func<Task> action){if(busy)return;busy=true;try{await action();}catch(Exception e){ClearPreview();message="Stopped: "+e.Message;}finally{busy=false;Repaint();}}
+        private async void RunOperation(Func<Task> action){if(busy)return;busy=true;try{await action();}catch(Exception e){ClearPreview();message="Stopped: "+e.Message;}finally{busy=false;Repaint();}}
     }
 }
