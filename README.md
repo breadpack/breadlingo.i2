@@ -16,7 +16,7 @@ The release also provides `com.breadpack.breadlingo.i2-0.3.1.tgz`. Unity 6000.3 
 
 1. Open **Window → BreadLingo → Game Localization**. The Editor detects an unambiguous saved `I2Languages` prefab; otherwise select the source prefab.
 2. Confirm the original authoring language once. I2 language order alone does not establish the source language.
-3. Click **Connect account in browser**. Sign in, check the game and code, and choose a workspace. BreadLingo requires recent MFA verification when issuing a connection credential; use your existing authenticator or recovery code if prompted. First-time accounts can create a personal workspace.
+3. Click **Connect account in browser**. Sign in, check the game and code, choose a workspace and approve the connection. Project connection uses the current login session without an additional security code, MFA enrollment or password prompt. First-time accounts can create a personal workspace.
 4. Return to Unity, select languages and click **Save selected languages**. Existing service languages are preserved. This step does not upload text, start AI billing, or modify the game prefab.
 5. Open source sync / approved translation preview when ready.
 
@@ -57,7 +57,7 @@ See [validation evidence and limitations](Documentation~/validation.md). Report 
 
 ## 한국어
 
-`Window → BreadLingo → Game Localization`에서 계정을 연결하고 대상 언어를 선택합니다. 최초 연결 시 원문 언어를 확인하며, 서비스 보안 규칙에 따라 2단계 인증 확인이 필요할 수 있습니다. Windows에서는 연결 자격 증명을 프로젝트 밖의 OS 암호화 저장소에 보관합니다. 연결과 언어 설정만으로 게임 파일 업로드, AI 실행, 게임 데이터 변경은 발생하지 않습니다.
+`Window → BreadLingo → Game Localization`에서 계정을 연결하고 대상 언어를 선택합니다. 최초 연결 시 원문 언어를 확인하며, 브라우저에 로그인한 계정으로 연결을 승인합니다. 프로젝트 연결 과정에서 추가 보안코드, 다중 인증 등록 또는 비밀번호 재입력을 요구하지 않습니다. Windows에서는 연결 자격 증명을 프로젝트 밖의 OS 암호화 저장소에 보관합니다. 연결과 언어 설정만으로 게임 파일 업로드, AI 실행, 게임 데이터 변경은 발생하지 않습니다.
 
 
 `Send I2 → BreadLingo`로 원문·기존 다국어 번역·context를 전송하고, 서비스에서 검토·승인한 뒤 `Preview approved BreadLingo → I2`에서 변경을 확인하여 선택 적용합니다. 로컬 수정 충돌이나 원문 버전 불일치는 차단합니다. 수동 입력 토큰은 메모리에만 보관하며 패키지 설치는 누구나 공개 Git URL로 할 수 있습니다. 별도 런타임 CSV/CDN 배포는 게임 빌드 파이프라인에서 처리해야 합니다.
