@@ -1,3 +1,11 @@
+# 0.3.0 local validation
+
+Verified on Windows / Unity 6000.3.9f1 on 2026-10-11. All 26 native NUnit tests passed, including the previous I2 sync tests and new origin, credential hash, connected-state and current-user DPAPI reload cases. A private copy of the actual DevilBook I2 prefab discovered its four existing languages without scanning or modifying terms. The onboarding Editor window opened successfully.
+
+The service integration tests cover native session/MFA and CSRF enforcement, code/proof separation, only-hash storage, poll replay, project/source reuse, explicit target-language grants, cancellation races, revoked/disabled issuers and existing I2 round-trip behavior. Package CI checks the public boundary and npm artifact, not licensed Unity or I2 execution.
+
+Account pairing and target-language setup never upload game text, create local I2 columns or start paid AI jobs. Persistent credential storage is currently Windows Editor only. New accounts follow the service's existing MFA enrollment and recent verification rules. Browser approval, public Git-URL UPM installation and deployed runtime checks are separate acceptance evidence and must not be inferred from native fixture tests.
+
 # 0.2.0 validation
 
 Verified on Windows / Unity 6000.3.9f1 on 2026-10-09.

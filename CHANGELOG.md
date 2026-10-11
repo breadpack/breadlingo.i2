@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-10-11 (beta)
+
+- Browser account pairing, automatic workspace/project setup and source-identity reconnection.
+- Target language selection without manual token or project-ID entry; additive service language setup.
+- Windows current-user DPAPI protects credentials and pending requests outside the project; domain reload recovery and disconnect/revocation.
+- Lightweight I2 language discovery: malformed term keys do not prevent onboarding; strict sync validation stays in place.
+- Connection does not upload game text or start AI jobs. New local I2 language columns are still an explicit I2 operation.
+
 ## 0.2.0 — 2026-10-09 (Beta)
 
 - Project-scoped HTTPS connector connection, in-memory token and CI environment token support.

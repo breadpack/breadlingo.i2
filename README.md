@@ -7,16 +7,30 @@ Public MIT Unity Editor tooling for I2 Localization. Install I2 separately under
 Unity Package Manager → Add package from Git URL:
 
 ```text
-https://github.com/breadpack/breadlingo.i2.git#v0.2.0
+https://github.com/breadpack/breadlingo.i2.git#v0.3.0
 ```
 
-The release also provides `com.breadpack.breadlingo.i2-0.2.0.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
+The release also provides `com.breadpack.breadlingo.i2-0.3.0.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
+
+## Account connection and language setup (0.3 beta)
+
+1. Open **Window → BreadLingo → Game Localization**. The Editor detects an unambiguous saved `I2Languages` prefab; otherwise select the source prefab.
+2. Confirm the original authoring language once. I2 language order alone does not establish the source language.
+3. Click **Connect account in browser**. Sign in, check the game and code, and choose a workspace. BreadLingo requires recent MFA verification when issuing a connection credential; use your existing authenticator or recovery code if prompted. First-time accounts can create a personal workspace.
+4. Return to Unity, select languages and click **Save selected languages**. Existing service languages are preserved. This step does not upload text, start AI billing, or modify the game prefab.
+5. Open source sync / approved translation preview when ready.
+
+The default window needs no token or workspace/project IDs. Pending pairing expires after 10 minutes; polling resumes after domain reload. Source identity (GUID + component ID) determines reconnection, never the display name. The public code cannot retrieve a credential. **Disconnect account** revokes the connection.
+
+Persistent account connection currently supports **Windows Editor**, using current-user OS DPAPI outside the project. Other operating systems can use the advanced memory-only manual connector. Credentials expire within 90 days or the workspace's shorter policy. The connection grants only its source/project, main branch, source/context sync, language setup and approved pulls; AI execution and publishing are separate.
+
+New remote languages do not create local I2 language columns; add those in I2 before a later translation apply. Language removal is an explicit BreadLingo project settings action.
 
 ## Bidirectional workflow
 
 1. Create a dedicated BreadLingo project with the exact I2 source and target **locale codes**, such as `ko`, `en`, `ja`, `zh-TW` (not translated language names). This version supports the `main` branch.
 2. Create a project-scoped **Unity connector token** in BreadLingo, with `unity:push`, `unity:pull`, `import:create`, `export:create`. Restrict its locales/branch and expiration as appropriate.
-3. Open **Window → BreadLingo → I2 Localization**. Set the HTTPS service origin, workspace/project IDs or slugs and token. The token stays in memory; it is never saved in preferences/assets/logs. CI code can supply `BREADLINGO_CONNECTOR_TOKEN`. Browser account pairing is not included in this version.
+3. Open **Window → BreadLingo → I2 Localization**. Set the HTTPS service origin, workspace/project IDs or slugs and token. The token stays in memory; it is never saved in preferences/assets/logs. CI code can supply `BREADLINGO_CONNECTOR_TOKEN`. The account connection window populates these settings automatically after pairing.
 4. Select a saved prefab with a legacy `I2.Loc.LanguageSource` component, scan, and select the source locale.
 5. Choose **Send I2 → BreadLingo**. Normal and touch variants are distinct entries. Source text and description are uploaded; existing translations are registered as `needs_review` only when the remote target is absent. Existing web translations are preserved. Source edits invalidate existing target approvals. Unchanged sources need no repeat upload.
 6. Translate and approve the results in BreadLingo's editor/review workflow.
@@ -43,4 +57,7 @@ See [validation evidence and limitations](Documentation~/validation.md). Report 
 
 ## 한국어
 
-`Send I2 → BreadLingo`로 원문·기존 다국어 번역·context를 전송하고, 서비스에서 검토·승인한 뒤 `Preview approved BreadLingo → I2`에서 변경을 확인하여 선택 적용합니다. 로컬 수정 충돌이나 원문 버전 불일치는 차단합니다. 토큰은 메모리에만 보관하며 패키지 설치는 누구나 공개 Git URL로 할 수 있습니다. 별도 런타임 CSV/CDN 배포는 게임 빌드 파이프라인에서 처리해야 합니다.
+`Window → BreadLingo → Game Localization`에서 계정을 연결하고 대상 언어를 선택합니다. 최초 연결 시 원문 언어를 확인하며, 서비스 보안 규칙에 따라 2단계 인증 확인이 필요할 수 있습니다. Windows에서는 연결 자격 증명을 프로젝트 밖의 OS 암호화 저장소에 보관합니다. 연결과 언어 설정만으로 게임 파일 업로드, AI 실행, 게임 데이터 변경은 발생하지 않습니다.
+
+
+`Send I2 → BreadLingo`로 원문·기존 다국어 번역·context를 전송하고, 서비스에서 검토·승인한 뒤 `Preview approved BreadLingo → I2`에서 변경을 확인하여 선택 적용합니다. 로컬 수정 충돌이나 원문 버전 불일치는 차단합니다. 수동 입력 토큰은 메모리에만 보관하며 패키지 설치는 누구나 공개 Git URL로 할 수 있습니다. 별도 런타임 CSV/CDN 배포는 게임 빌드 파이프라인에서 처리해야 합니다.

@@ -1,9 +1,9 @@
 {
   "name": "com.breadpack.breadlingo.i2",
   "displayName": "BreadLingo I2 Localization",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "unity": "6000.3",
-  "description": "Bidirectional Unity Editor text sync for I2 Localization: send sources, preview approved translations and apply safe per-cell merges.",
+  "description": "Unity Editor browser account connection, automatic I2 project setup and target-language selection with bidirectional approved text sync.",
   "author": {
     "name": "BreadPack",
     "url": "https://github.com/breadpack"

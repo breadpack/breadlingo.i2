@@ -25,9 +25,13 @@ namespace BreadLingo.I2.Editor
         private I2SyncBaseline previewBaseline;
         [MenuItem("Window/BreadLingo/I2 Localization")]
         public static void Open(){GetWindow<BreadLingoI2Window>("BreadLingo I2");}
+        private void OnEnable()
+        {
+            try { var c=UnityAccountConnection.Load();if(c!=null&&c.Connected){origin=c.origin;workspace=c.workspaceId;project=c.projectId;token=c.connectorSecret;sourceAsset=AssetDatabase.LoadAssetAtPath<GameObject>(c.assetPath);} }catch(Exception error){message=error.Message;}
+        }
         private void OnGUI()
         {
-            EditorGUILayout.HelpBox("0.2.0 — I2 ↔ BreadLingo normal/touch text sync and approved merge preview. Configure exact source/target locale codes in the project. Branch: main.",MessageType.Info);
+            EditorGUILayout.HelpBox("0.3.0 — I2 ↔ BreadLingo normal/touch text sync and approved merge preview. Configure exact source/target locale codes in the project. Branch: main.",MessageType.Info);
             if(I2SnapshotReader.DetectSourceType()==null){EditorGUILayout.HelpBox("Install I2 Localization separately. This package contains no I2 vendor code.",MessageType.Warning);return;}
             using(new EditorGUI.DisabledScope(busy))
             {
@@ -36,7 +40,7 @@ namespace BreadLingo.I2.Editor
                 if(EditorGUI.EndChangeCheck()){snapshot=null;ClearPreview();}
                 EditorGUILayout.LabelField("Token stays in memory; CI may use BREADLINGO_CONNECTOR_TOKEN.",EditorStyles.wordWrappedMiniLabel);
                 if(GUILayout.Button("Use selected prefab")){sourceAsset=Selection.activeObject;snapshot=null;ClearPreview();}
-                using(new EditorGUI.DisabledScope(sourceAsset==null))if(GUILayout.Button("Scan source"))Run(()=>{snapshot=I2SnapshotReader.ReadAsset(sourceAsset);sourceLanguage=0;ClearPreview();message="Scan complete.";});
+                using(new EditorGUI.DisabledScope(sourceAsset==null))if(GUILayout.Button("Scan source"))Run(()=>{snapshot=I2SnapshotReader.ReadAsset(sourceAsset);sourceLanguage=0;try{var c=UnityAccountConnection.Load();if(c!=null&&c.Connected)sourceLanguage=Math.Max(0,snapshot.languages.FindIndex(l=>l.code==c.sourceLocale));}catch{}ClearPreview();message="Scan complete.";});
                 if(snapshot!=null)
                 {
                     EditorGUILayout.LabelField("Terms / text / excluded assets",snapshot.termCount+" / "+snapshot.entries.Count+" / "+snapshot.nonTextCount);
