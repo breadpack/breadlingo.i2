@@ -18,6 +18,7 @@ namespace BreadLingo.I2.Editor
     {
         public string origin="https://breadlingo.com",id,userCode,deviceSecret,connectorSecret,verificationUri,expiresAt,sourceId,sourceLocale,assetPath,workspaceId,projectId,projectName,accountName;
         public string[] existingLocales=new string[0],selectedLocales=new string[0];
+        public int languageVersion;public string aiDefaultStatus="unknown"; public UnityProjectLanguage[] projectLanguages=new UnityProjectLanguage[0];
         public bool Connected { get {return !string.IsNullOrEmpty(projectId)&&!string.IsNullOrEmpty(connectorSecret);} }
     }
     [Serializable] public sealed class UnityPairingStart {public string projectName,sourceId,sourceLocale,deviceSecret,tokenHash;public string[] existingLocales;}
@@ -25,6 +26,13 @@ namespace BreadLingo.I2.Editor
     [Serializable] public sealed class UnityPairingResponse {public string id,userCode,expiresAt,verificationUri,status,workspaceId,projectId,projectName,sourceLocale,accountName;public string[] existingLocales;}
     [Serializable] public sealed class UnityLocaleRequest {public string[] targetLocales;}
     [Serializable] public sealed class UnityLocaleResponse {public string[] targetLocales,selectedLocales;}
+    [Serializable] public sealed class UnityProjectLanguage {public string id,code,displayName,nativeName,direction,status,role,aiStatus;public int version;}
+    [Serializable] public sealed class UnityProjectLanguages {public string workspaceId,projectId,sourceLocale;public int version;public string[] activeTargetLocales,tokenAllowedLocales;public UnityProjectLanguage[] locales;public UnityLanguageAi ai;}
+    [Serializable] public sealed class UnityLanguageAi {public UnityLanguageAiState defaultState;}
+    [Serializable] public sealed class UnityLanguageAiState {public string status,reason;}
+    [Serializable] public sealed class UnityCatalogLanguage {public string code,name,english,native,direction,kind;}
+    [Serializable] public sealed class UnityCatalogPage {public string version,nextCursor;public int total,catalogTotal;public UnityCatalogLanguage[] entries;}
+    [Serializable] public sealed class UnityVersionedLocaleRequest {public string[] targetLocales;public int baseVersion;}
     [Serializable] internal sealed class UnityApiError {public UnityApiErrorDetail error;}
     [Serializable] internal sealed class UnityApiErrorDetail {public string code;}
     public sealed class UnityConnectionException : Exception {public readonly string Code;public readonly int Status;public UnityConnectionException(string code,int status):base("BreadLingo connection: "+code+" (HTTP "+status+")."){Code=code;Status=status;}}
@@ -45,7 +53,7 @@ namespace BreadLingo.I2.Editor
             {
                 if(item==null)throw new InvalidOperationException("Invalid I2 language entry.");var t=item.GetType();
                 var code=t.GetField("Code")?.GetValue(item) as string;var name=t.GetField("Name")?.GetValue(item) as string;
-                if(string.IsNullOrEmpty(code)||!System.Text.RegularExpressions.Regex.IsMatch(code,"^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$")||info.languages.Any(l=>string.Equals(l.code,code,StringComparison.OrdinalIgnoreCase)))throw new InvalidOperationException("I2 locale codes must be valid and unique.");
+                if(!ValidLocaleSyntax(code)||info.languages.Any(l=>string.Equals(l.code,code,StringComparison.OrdinalIgnoreCase)))throw new InvalidOperationException("I2 locale codes must be valid and unique.");
                 info.languages.Add(new I2Language{code=code,name=name});
             }
             return info; // No term scan; data-quality errors must not prevent account onboarding.
@@ -76,9 +84,32 @@ namespace BreadLingo.I2.Editor
         public static async Task ConfigureLanguages(UnityConnectionState state,string[] locales)
         {
             if(!state.Connected)throw new InvalidOperationException("Connect the account first.");
-            var response=await Post<UnityLocaleResponse>(state.origin+"/api/workspaces/"+state.workspaceId+"/projects/"+state.projectId+"/connectors/unity/configure",new UnityLocaleRequest{targetLocales=locales},state.connectorSecret);
+            if(state.languageVersion<1)await RefreshLanguages(state);
+            var response=await Post<UnityLocaleResponse>(ProjectUrl(state)+"/configure",new UnityVersionedLocaleRequest{targetLocales=locales,baseVersion=state.languageVersion},state.connectorSecret);
             if(response.selectedLocales==null||!response.selectedLocales.SequenceEqual(locales))throw new InvalidOperationException("Service did not confirm the selected languages.");
-            state.selectedLocales=response.selectedLocales;Save(state);
+            state.selectedLocales=response.selectedLocales;Save(state);await RefreshLanguages(state);
+        }
+        public static bool ValidLocaleSyntax(string code){return !string.IsNullOrEmpty(code)&&code.Length<=128&&System.Text.RegularExpressions.Regex.IsMatch(code,"^(?:[a-zA-Z]{2,3}(-[a-zA-Z0-9]{1,8})*|x(-[a-zA-Z0-9]{1,8})+)$");}
+        private static string ProjectUrl(UnityConnectionState state){ValidateOrigin(state.origin);if(!state.Connected||string.IsNullOrEmpty(state.workspaceId))throw new InvalidOperationException("Connect the account first.");return state.origin+"/api/workspaces/"+Uri.EscapeDataString(state.workspaceId)+"/projects/"+Uri.EscapeDataString(state.projectId)+"/connectors/unity";}
+        public static async Task<UnityProjectLanguages> RefreshLanguages(UnityConnectionState state)
+        {
+            var data=await Get<UnityProjectLanguages>(ProjectUrl(state)+"/languages",state.connectorSecret);
+            if(data.projectId!=state.projectId||data.workspaceId!=state.workspaceId||data.sourceLocale!=state.sourceLocale||data.version<1||data.locales==null||data.activeTargetLocales==null)throw new InvalidOperationException("Unexpected project language binding.");
+            state.languageVersion=data.version;state.projectLanguages=data.locales;state.aiDefaultStatus=data.ai?.defaultState?.status??"unknown";state.selectedLocales=data.activeTargetLocales;Save(state);return data;
+        }
+        public static Task<UnityCatalogPage> SearchLanguages(string origin,string query="",string cursor=null,string category="all")
+        {
+            ValidateOrigin(origin);return Get<UnityCatalogPage>(origin+"/api/languages?uiLocale=en&limit=80&category="+Uri.EscapeDataString(category)+"&query="+Uri.EscapeDataString(query??"")+(string.IsNullOrEmpty(cursor)?"":"&cursor="+Uri.EscapeDataString(cursor)));
+        }
+        private static async Task<T> Get<T>(string url,string token=null)
+        {
+            using(var client=new HttpClient(new HttpClientHandler{AllowAutoRedirect=false}){Timeout=TimeSpan.FromSeconds(60)})
+            {if(token!=null)client.DefaultRequestHeaders.Add("X-Connector-Token",token);using(var response=await client.GetAsync(url))return await ReadResponse<T>(response);}
+        }
+        private static async Task<T> ReadResponse<T>(HttpResponseMessage response)
+        {
+            var text=await response.Content.ReadAsStringAsync();if(text.Length>2097152)throw new InvalidOperationException("Connection response exceeds safe size.");
+            if(!response.IsSuccessStatusCode){UnityApiError error=null;try{error=JsonUtility.FromJson<UnityApiError>(text);}catch{}throw new UnityConnectionException(error?.error?.code??"connection_failed",(int)response.StatusCode);}return JsonUtility.FromJson<T>(text);
         }
         public static async Task Disconnect(UnityConnectionState state)
         {
@@ -101,9 +132,7 @@ namespace BreadLingo.I2.Editor
                 if(token!=null)client.DefaultRequestHeaders.Add("X-Connector-Token",token);
                 using(var response=await client.PostAsync(url,content))
                 {
-                    var text=await response.Content.ReadAsStringAsync();if(text.Length>131072)throw new InvalidOperationException("Connection response exceeds safe size.");
-                    if(!response.IsSuccessStatusCode){var error=JsonUtility.FromJson<UnityApiError>(text);throw new UnityConnectionException(error?.error?.code??"connection_failed",(int)response.StatusCode);}
-                    return JsonUtility.FromJson<T>(text);
+                    return await ReadResponse<T>(response);
                 }
             }
         }

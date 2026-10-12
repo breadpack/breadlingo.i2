@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 - 2026-10-12
+
+- Search the shared IANA/CLDR language catalog instead of a fixed 16-language checklist.
+- Refresh active/inactive project languages and source-pair AI readiness from BreadLingo.
+- Versioned language saves detect concurrent web edits; no additional connection authentication.
+- Explicit I2 language-column synchronization creates a prefab backup and verifies original content after saving; blank targets remain untranslated.
+- Native tests cover 100-language setup, metadata preservation and unrelated duplicate-term compatibility.
+
 ## 0.3.1 - 2026-10-11
 
 - Rename Editor async operation helpers to avoid Unity interpreting `Start(Func<Task>)` as an invalid lifecycle message during real UPM import.
