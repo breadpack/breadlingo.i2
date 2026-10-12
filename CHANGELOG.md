@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 - 2026-10-12
+
+- Preserve source-pair AI readiness for catalog languages that have not yet been added to the project.
+- Display evaluated model states in the Unity language search, including unsupported and policy-disabled states.
+
 ## 0.4.0 - 2026-10-12
 
 - Search the shared IANA/CLDR language catalog instead of a fixed 16-language checklist.

@@ -18,7 +18,7 @@ namespace BreadLingo.I2.Editor
     {
         public string origin="https://breadlingo.com",id,userCode,deviceSecret,connectorSecret,verificationUri,expiresAt,sourceId,sourceLocale,assetPath,workspaceId,projectId,projectName,accountName;
         public string[] existingLocales=new string[0],selectedLocales=new string[0];
-        public int languageVersion;public string aiDefaultStatus="unknown"; public UnityProjectLanguage[] projectLanguages=new UnityProjectLanguage[0];
+        public int languageVersion;public string aiDefaultStatus="unknown"; public UnityProjectLanguage[] projectLanguages=new UnityProjectLanguage[0];public UnityLanguageAiState[] aiLanguageStates=new UnityLanguageAiState[0];
         public bool Connected { get {return !string.IsNullOrEmpty(projectId)&&!string.IsNullOrEmpty(connectorSecret);} }
     }
     [Serializable] public sealed class UnityPairingStart {public string projectName,sourceId,sourceLocale,deviceSecret,tokenHash;public string[] existingLocales;}
@@ -27,9 +27,9 @@ namespace BreadLingo.I2.Editor
     [Serializable] public sealed class UnityLocaleRequest {public string[] targetLocales;}
     [Serializable] public sealed class UnityLocaleResponse {public string[] targetLocales,selectedLocales;}
     [Serializable] public sealed class UnityProjectLanguage {public string id,code,displayName,nativeName,direction,status,role,aiStatus;public int version;}
-    [Serializable] public sealed class UnityProjectLanguages {public string workspaceId,projectId,sourceLocale;public int version;public string[] activeTargetLocales,tokenAllowedLocales;public UnityProjectLanguage[] locales;public UnityLanguageAi ai;}
+    [Serializable] public sealed class UnityProjectLanguages {public string workspaceId,projectId,sourceLocale;public int version;public string[] activeTargetLocales,tokenAllowedLocales;public UnityProjectLanguage[] locales;public UnityLanguageAi ai;public UnityLanguageAiState[] aiStates;}
     [Serializable] public sealed class UnityLanguageAi {public UnityLanguageAiState defaultState;}
-    [Serializable] public sealed class UnityLanguageAiState {public string status,reason;}
+    [Serializable] public sealed class UnityLanguageAiState {public string code,status,reason,providerId,model,qualityMode;}
     [Serializable] public sealed class UnityCatalogLanguage {public string code,name,english,native,direction,kind;}
     [Serializable] public sealed class UnityCatalogPage {public string version,nextCursor;public int total,catalogTotal;public UnityCatalogLanguage[] entries;}
     [Serializable] public sealed class UnityVersionedLocaleRequest {public string[] targetLocales;public int baseVersion;}
@@ -95,7 +95,7 @@ namespace BreadLingo.I2.Editor
         {
             var data=await Get<UnityProjectLanguages>(ProjectUrl(state)+"/languages",state.connectorSecret);
             if(data.projectId!=state.projectId||data.workspaceId!=state.workspaceId||data.sourceLocale!=state.sourceLocale||data.version<1||data.locales==null||data.activeTargetLocales==null)throw new InvalidOperationException("Unexpected project language binding.");
-            state.languageVersion=data.version;state.projectLanguages=data.locales;state.aiDefaultStatus=data.ai?.defaultState?.status??"unknown";state.selectedLocales=data.activeTargetLocales;Save(state);return data;
+            state.languageVersion=data.version;state.projectLanguages=data.locales;state.aiDefaultStatus=data.ai?.defaultState?.status??"unknown";state.aiLanguageStates=data.aiStates??new UnityLanguageAiState[0];state.selectedLocales=data.activeTargetLocales;Save(state);return data;
         }
         public static Task<UnityCatalogPage> SearchLanguages(string origin,string query="",string cursor=null,string category="all")
         {

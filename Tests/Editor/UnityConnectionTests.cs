@@ -7,6 +7,10 @@ namespace BreadLingo.I2.Editor.Tests
 {
     public sealed class UnityConnectionTests
     {
+        [Test] public void SourcePairAiStatesDeserializeForLanguagesNotYetAddedToTheProject()
+        {
+            var response=JsonUtility.FromJson<UnityProjectLanguages>("{\"aiStates\":[{\"code\":\"ar\",\"status\":\"available\",\"model\":\"evaluated-model\"},{\"code\":\"aa\",\"status\":\"unsupported\"}],\"ai\":{\"defaultState\":{\"status\":\"unknown\"}}}");Assert.AreEqual("available",response.aiStates[0].status);Assert.AreEqual("evaluated-model",response.aiStates[0].model);Assert.AreEqual("unsupported",response.aiStates[1].status);Assert.AreEqual("unknown",response.ai.defaultState.status);
+        }
         [Test] public void OriginRejectsHttpRedirectsCredentialsAndNonOriginUrls()
         {
             UnityAccountConnection.ValidateOrigin("https://breadlingo.com");
