@@ -20,6 +20,7 @@ namespace BreadLingo.I2.Editor
         public string[] existingLocales=new string[0],selectedLocales=new string[0];
         public int languageVersion;public string aiDefaultStatus="unknown"; public UnityProjectLanguage[] projectLanguages=new UnityProjectLanguage[0];public UnityLanguageAiState[] aiLanguageStates=new UnityLanguageAiState[0];
         public bool Connected { get {return !string.IsNullOrEmpty(projectId)&&!string.IsNullOrEmpty(connectorSecret);} }
+        public bool PendingExpired { get {DateTimeOffset expiry;return !Connected&&DateTimeOffset.TryParse(expiresAt,out expiry)&&expiry<=DateTimeOffset.UtcNow;} }
     }
     [Serializable] public sealed class UnityPairingStart {public string projectName,sourceId,sourceLocale,deviceSecret,tokenHash;public string[] existingLocales;}
     [Serializable] public sealed class UnityPairingProof {public string id,deviceSecret;}

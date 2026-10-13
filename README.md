@@ -7,17 +7,17 @@ Public MIT Unity Editor tooling for I2 Localization. Install I2 separately under
 Unity Package Manager → Add package from Git URL:
 
 ```text
-https://github.com/breadpack/breadlingo.i2.git#v0.4.1
+https://github.com/breadpack/breadlingo.i2.git#v0.4.2
 ```
 
-The release also provides `com.breadpack.breadlingo.i2-0.4.1.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
+The release also provides `com.breadpack.breadlingo.i2-0.4.2.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
 
 ## Account connection and language setup (0.4 beta)
 
 1. Open **Window → BreadLingo → Game Localization**. The Editor detects an unambiguous saved `I2Languages` prefab; otherwise select the source prefab.
 2. Confirm the original authoring language once. I2 language order alone does not establish the source language.
-3. Click **Connect account in browser**. Sign in, check the game and code, choose a workspace and approve the connection. Project connection uses the current login session without an additional security code, MFA enrollment or password prompt. First-time accounts can create a personal workspace.
-4. Return to Unity, search all languages and click **Add and save selected languages**. Existing service languages are preserved. This step does not upload text, start AI billing, or modify the game prefab.
+3. Click **Connect account in browser**. New developers choose **Sign up and continue**; existing users sign in. Signup returns to the matching game approval. Confirm creation of a personal workspace and project, or choose an existing team workspace. Reconnecting the same source reuses its project. Project connection uses the current login session without an additional security code, MFA enrollment or password prompt. If the 10-minute code expires, use **Get a new connection code** in Unity; the browser account is retained.
+4. Return to Unity. Approval automatically refreshes the project languages and searchable catalog. Search all languages and click **Add and save selected languages**. Existing service languages are preserved. This step does not upload text, start AI billing, or modify the game prefab.
 5. **Refresh project languages from BreadLingo** reads the same active/disabled languages configured on the web. AI readiness is separate: supported, unsupported, unverified, not connected, or disabled by project policy. Unverified does not mean unsupported.
 6. **Synchronize active project languages to I2…** previews new codes and appends blank normal/touch translation columns after confirmation. It creates a full prefab backup, preserves original language order/text/flags, and verifies original content after saving. Existing or inactive columns are not removed.
 7. Open source sync / approved translation preview when ready.
@@ -26,7 +26,7 @@ The default window needs no token or workspace/project IDs. Pending pairing expi
 
 Persistent account connection currently supports **Windows Editor**, using current-user OS DPAPI outside the project. Other operating systems can use the advanced memory-only manual connector. Credentials expire within 90 days or the workspace's shorter policy. The connection grants only its source/project, main branch, source/context sync, language setup and approved pulls; AI execution and publishing are separate.
 
-New remote languages do not create local I2 language columns; add those in I2 before a later translation apply. Language removal is an explicit BreadLingo project settings action.
+New remote languages do not create local I2 language columns until **Synchronize active project languages to I2…** is explicitly run. Language removal is an explicit BreadLingo project settings action.
 
 ## Bidirectional workflow
 

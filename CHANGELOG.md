@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2 - 2026-10-13
+
+- Guide first-time developers through browser signup and automatic workspace/project setup.
+- Refresh project languages and the searchable catalog immediately after browser approval.
+- Show expired-code recovery and allow a new pairing without recreating the browser account.
+- Keep an approved connection valid after its initial pairing code expires.
+
 ## 0.4.1 - 2026-10-12
 
 - Preserve source-pair AI readiness for catalog languages that have not yet been added to the project.

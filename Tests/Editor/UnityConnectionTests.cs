@@ -24,6 +24,13 @@ namespace BreadLingo.I2.Editor.Tests
         {
             var state=new UnityConnectionState();Assert.IsFalse(state.Connected);state.projectId="project";Assert.IsFalse(state.Connected);state.connectorSecret="synthetic";Assert.IsTrue(state.Connected);
         }
+        [Test] public void PendingExpiryDoesNotInvalidateAnApprovedConnection()
+        {
+            var state=new UnityConnectionState{expiresAt=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O")};Assert.IsTrue(state.PendingExpired);
+            state.expiresAt=DateTimeOffset.UtcNow.AddMinutes(2).ToString("O");Assert.IsFalse(state.PendingExpired);
+            state.expiresAt="invalid";Assert.IsFalse(state.PendingExpired);
+            state.expiresAt=DateTimeOffset.UtcNow.AddMinutes(-1).ToString("O");state.projectId="project";state.connectorSecret="synthetic";Assert.IsFalse(state.PendingExpired);
+        }
         [Test] public void CurrentUserVaultRestoresPendingProofAndLanguageChoiceAfterReload()
         {
             if(Application.platform!=RuntimePlatform.WindowsEditor)Assert.Ignore("Windows DPAPI native test.");

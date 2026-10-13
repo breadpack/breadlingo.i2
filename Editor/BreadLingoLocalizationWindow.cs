@@ -66,10 +66,11 @@ namespace BreadLingo.I2.Editor
                 else if(!connection.Connected)
                 {
                     EditorGUILayout.LabelField("Connection code",connection.userCode??"Request interrupted");
-                    EditorGUILayout.HelpBox("Confirm this project in your browser. This request expires in 10 minutes.",MessageType.Info);
+                    EditorGUILayout.HelpBox(connection.PendingExpired?"The connection code expired. Your account is retained. Get a new connection code below.":"Sign up or sign in in your browser, then approve creation or connection of this game project. Return here to choose languages. The code expires in 10 minutes.",MessageType.Info);
                     using(new EditorGUI.DisabledScope(busy))
                     {
-                        if(!string.IsNullOrEmpty(connection.verificationUri)&&GUILayout.Button("Open account confirmation"))Application.OpenURL(connection.verificationUri);
+                        if(!connection.PendingExpired&&!string.IsNullOrEmpty(connection.verificationUri)&&GUILayout.Button("Open account confirmation"))Application.OpenURL(connection.verificationUri);
+                        if(GUILayout.Button("Get a new connection code"))RunOperation(async()=>{var locale=connection.sourceLocale;await Disconnect();connection=await UnityAccountConnection.Begin(source,locale,origin);Application.OpenURL(connection.verificationUri);nextPoll=0;message="Use your existing browser login to approve the new connection.";});
                         if(GUILayout.Button("Cancel / reconnect"))RunOperation(Disconnect);
                     }
                 }
@@ -127,9 +128,9 @@ namespace BreadLingo.I2.Editor
         private async Task Search(bool more){var page=await UnityAccountConnection.SearchLanguages(origin,languageQuery,more?nextCursor:null);if(!more)catalog.Clear();catalog.AddRange(page.entries??new UnityCatalogLanguage[0]);nextCursor=page.nextCursor;catalogTotal=page.total;}
         private void UpdateConnection()
         {
-            if(busy||connection==null||connection.Connected||string.IsNullOrEmpty(connection.id)||EditorApplication.timeSinceStartup<nextPoll)return;
+            if(busy||connection==null||connection.Connected||connection.PendingExpired||string.IsNullOrEmpty(connection.id)||EditorApplication.timeSinceStartup<nextPoll)return;
             nextPoll=EditorApplication.timeSinceStartup+6;
-            RunOperation(async()=>{try{if(await UnityAccountConnection.Poll(connection))message="Account connected. Choose your target languages below.";}catch(UnityConnectionException error){if(error.Status!=429){message=error.Message;nextPoll=EditorApplication.timeSinceStartup+30;}}});
+            RunOperation(async()=>{try{if(await UnityAccountConnection.Poll(connection)){await RefreshLanguages();message="Account connected and project ready. Search and choose your target languages below.";}}catch(UnityConnectionException error){if(error.Status!=429){message=error.Status==410?"Connection expired or cancelled. Get a new connection code; your browser account is retained.":error.Message;nextPoll=EditorApplication.timeSinceStartup+30;}}});
         }
         private async void RunOperation(Func<Task> action){if(busy)return;busy=true;try{await action();}catch(Exception error){message=error.Message;}finally{busy=false;Repaint();}}
     }
