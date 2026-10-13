@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3 - 2026-10-13
+
+- Recover server-approved connections when the Editor returns after the browser code expiry.
+- Pending expiry guidance no longer suppresses the device-proof status check.
+
 ## 0.4.2 - 2026-10-13
 
 - Guide first-time developers through browser signup and automatic workspace/project setup.

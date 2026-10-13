@@ -128,7 +128,9 @@ namespace BreadLingo.I2.Editor
         private async Task Search(bool more){var page=await UnityAccountConnection.SearchLanguages(origin,languageQuery,more?nextCursor:null);if(!more)catalog.Clear();catalog.AddRange(page.entries??new UnityCatalogLanguage[0]);nextCursor=page.nextCursor;catalogTotal=page.total;}
         private void UpdateConnection()
         {
-            if(busy||connection==null||connection.Connected||connection.PendingExpired||string.IsNullOrEmpty(connection.id)||EditorApplication.timeSinceStartup<nextPoll)return;
+            // Approval remains valid after the browser code expires. Always ask the server
+            // before treating a pending local state as expired (Editor may have been closed).
+            if(busy||connection==null||connection.Connected||string.IsNullOrEmpty(connection.id)||EditorApplication.timeSinceStartup<nextPoll)return;
             nextPoll=EditorApplication.timeSinceStartup+6;
             RunOperation(async()=>{try{if(await UnityAccountConnection.Poll(connection)){await RefreshLanguages();message="Account connected and project ready. Search and choose your target languages below.";}}catch(UnityConnectionException error){if(error.Status!=429){message=error.Status==410?"Connection expired or cancelled. Get a new connection code; your browser account is retained.":error.Message;nextPoll=EditorApplication.timeSinceStartup+30;}}});
         }

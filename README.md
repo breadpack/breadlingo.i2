@@ -7,10 +7,10 @@ Public MIT Unity Editor tooling for I2 Localization. Install I2 separately under
 Unity Package Manager → Add package from Git URL:
 
 ```text
-https://github.com/breadpack/breadlingo.i2.git#v0.4.2
+https://github.com/breadpack/breadlingo.i2.git#v0.4.3
 ```
 
-The release also provides `com.breadpack.breadlingo.i2-0.4.2.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
+The release also provides `com.breadpack.breadlingo.i2-0.4.3.tgz`. Unity 6000.3 is the tested Editor API baseline. All code is Editor-only.
 
 ## Account connection and language setup (0.4 beta)
 
